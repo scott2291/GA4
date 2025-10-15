@@ -30,13 +30,13 @@ The following Sbatch options were added to the top of `trimgalore.sh`:
 
 ```bash
 
-#!/bin/bash
-#SBATCH --account=PAS2880
-#SBATCH --cpus-per-task=8
-#SBATCH --time 30
-#SBATCH --mail-type=FAIL
-#SBATCH --output=slurm-trimgalore-%j.out
-set -euo pipefail
+    #!/bin/bash
+    #SBATCH --account=PAS2880
+    #SBATCH --cpus-per-task=8
+    #SBATCH --time 30
+    #SBATCH --mail-type=FAIL
+    #SBATCH --output=slurm-trimgalore-%j.out
+    set -euo pipefail
 
 ```
 
@@ -52,24 +52,21 @@ set -euo pipefail
 
     The following Sbatch options were added to the top of `trimgalore.sh`:
 
-        ```bash
-
-        #!/bin/bash
-        #SBATCH --account=PAS2880
-        #SBATCH --cpus-per-task=8
-        #SBATCH --time 30
-        #SBATCH --mail-type=FAIL
-        #SBATCH --output=slurm-trimgalore-%j.out
-        set -euo pipefail
-
-        ```
+    ```bash
+    #!/bin/bash
+    #SBATCH --account=PAS2880        #SBATCH --cpus-per-task=8
+    #SBATCH --time 30
+    #SBATCH --mail-type=FAIL
+    #SBATCH --output=slurm-trimgalore-%j.out
+    set -euo pipefail
+    ```
 
 1. By printing and scanning through the TrimGalore help info once again (see last week’s exercises), find the TrimGalore option that specifies how many cores it can use – add the relevant line(s) from the TrimGalore help info to your `README.md`. In the script, change the `trim_galore` command accordingly to use the available number of cores.
 
     The following information is from the TrimGalore --help command and specifies the number of cores it can use:
 
     ```bash
-        -j/--cores INT          Number of cores to be used for trimming [default: 1]. For Cutadapt to work with multiple cores, it
+    -j/--cores INT          Number of cores to be used for trimming [default: 1]. For Cutadapt to work with multiple cores, it
                         requires Python 3 as well as parallel gzip (pigz) installed on the system. Trim Galore attempts to detect
                         the version of Python used by calling Cutadapt. If Python 2 is detected, --cores is set to 1. If the Python
                         version cannot be detected, Python 3 is assumed and we let Cutadapt handle potential issues itself.
@@ -82,25 +79,25 @@ set -euo pipefail
                         Assuming that Python 3 is used and pigz is installed, --cores 2 would use 2 cores to read the input
                         (probably not at a high usage though), 2 cores to write to the output (at moderately high usage), and 
                         2 cores for Cutadapt itself + 2 additional cores for Cutadapt (not sure what they are used for) + 1 core
-                        for Trim Galore itself. So this can be up to 9 cores, even though most of them won't be used at 100% for
+                        for Trim Galore itself. So this can be up to 9 cores, even though most of them wont be used at 100% for
                         most of the time. Paired-end processing uses twice as many cores for the validation (= writing out) step.
                         --cores 4 would then be: 4 (read) + 4 (write) + 4 (Cutadapt) + 2 (extra Cutadapt) + 1 (Trim Galore) = 15.
 
                         It seems that --cores 4 could be a sweet spot, anything above has diminishing returns.
 
     ```
-    I am confused about this question, due to the cores math they do for Python3 in the above section of the `trimgalore --help` command.  I specified 8 cores using the `--cores` option. The following line was adjusted:
+    I am confused about this question, due to the cores math they do for Python3 in the above section of the `trimgalore --help` command.  I specified 8 cores using the `--cores` option because of informatio provided from the lecture notes. The following line was adjusted:
 
     ```bash 
-        # Run TrimGalore
-        apptainer exec "$TRIMGALORE_CONTAINER" \
-            trim_galore \
-            --cores 8 \
-            --paired \
-            --fastqc \
-            --output_dir "$outdir" \
-            "$R1" \
-            "$R2"
+    # Run TrimGalore
+    apptainer exec "$TRIMGALORE_CONTAINER" \
+        trim_galore \
+        --cores 8 \
+        --paired \
+        --fastqc \
+        --output_dir "$outdir" \
+        "$R1" \
+        "$R2"
     ```
 
 1. To test the script and batch job submission, submit the script as a batch job only for sample `ERR10802863`.
@@ -178,7 +175,7 @@ set -euo pipefail
     apptainer exec "$TRIMGALORE_CONTAINER" \
         trim_galore \
         --cores 8 \
-        --2colour \
+        --2colour 3 \
         --paired \
         --fastqc \
         --output_dir "$outdir" \
@@ -202,15 +199,6 @@ set -euo pipefail
     When checking the `ERR10802863_R2_val_2_fastqc.html` file again, there is no warning under the Overrepresented sequences tab, which indicates that the repeated `G`s have been removed. 
 
     The command needed a specified number, and I used the 3 that I noticed from the `trimgalore --help` command.  I am not sure if this is too short of a specification, and I would be curious as to what you would reccommend to set this to.
-
-
-### Bonus: Modify the script to rename the output FASTQ files
-
-if you choose not to do this Bonus part, you can simply move on to Part C.
-
-The TrimGalore output FASTQ files are oddly named, ending in `_R1_val_1.fq.gz` and `_R2_val_2.fq.gz` – check the output files from your initial run to see this. This is not necessarily a problem, but could trip you up in a next step with these files.
-
-Therefore, modify your TrimGalore script to rename the output files after running TrimGalore, giving them the same names as the input files. Then, rerun the script to check that your changes were successful.
 
 ## Part C: TrimGalore batch jobs in a loop
 
@@ -490,5 +478,9 @@ You’ll publish your Git repo on GitHub and “hand in” your assignment by cr
 
 1. Create a repository on GitHub, connect it to your local repo, and push your local repo to GitHub.
 
+    > done!
+
 1. Create a new issue and tag GitHub users `menukabh` and `jelmerp`, asking us to take a look at your assignment.
+
+    > done!
 
