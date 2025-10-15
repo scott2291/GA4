@@ -26,6 +26,20 @@
 
 You’ll start with the TrimGalore script you just created, which should be much like that from last week’s exercises. But this time, instead of running the TrimGalore script “directly” with `bash`, you will submit it as a batch job. Then, in the next section, you will submit many batch jobs at the same time: one for each sample.
 
+The following Sbatch options were added to the top of `trimgalore.sh`:
+
+```bash
+
+#!/bin/bash
+#SBATCH --account=PAS2880
+#SBATCH --cpus-per-task=8
+#SBATCH --time 30
+#SBATCH --mail-type=FAIL
+#SBATCH --output=slurm-trimgalore-%j.out
+set -euo pipefail
+
+```
+
 
 1. Add Sbatch options to the top of the TrimGalore shell script to specify:
     -     The account/project you want to use
@@ -35,20 +49,161 @@ You’ll start with the TrimGalore script you just created, which should be much
     -     That Slurm should email you upon job failure
     -     Optional: you can try other Sbatch options you’d like to test
 
+
+    The following Sbatch options were added to the top of `trimgalore.sh`:
+
+        ```bash
+
+        #!/bin/bash
+        #SBATCH --account=PAS2880
+        #SBATCH --cpus-per-task=8
+        #SBATCH --time 30
+        #SBATCH --mail-type=FAIL
+        #SBATCH --output=slurm-trimgalore-%j.out
+        set -euo pipefail
+
+        ```
+
 1. By printing and scanning through the TrimGalore help info once again (see last week’s exercises), find the TrimGalore option that specifies how many cores it can use – add the relevant line(s) from the TrimGalore help info to your `README.md`. In the script, change the `trim_galore` command accordingly to use the available number of cores.
+
+    The following information is from the TrimGalore --help command and specifies the number of cores it can use:
+
+    ```bash
+        -j/--cores INT          Number of cores to be used for trimming [default: 1]. For Cutadapt to work with multiple cores, it
+                        requires Python 3 as well as parallel gzip (pigz) installed on the system. Trim Galore attempts to detect
+                        the version of Python used by calling Cutadapt. If Python 2 is detected, --cores is set to 1. If the Python
+                        version cannot be detected, Python 3 is assumed and we let Cutadapt handle potential issues itself.
+                        
+                        If pigz cannot be detected on your system, Trim Galore reverts to using gzip compression. Please note
+                        that gzip compression will slow down multi-core processes so much that it is hardly worthwhile, please 
+                        see: https://github.com/FelixKrueger/TrimGalore/issues/16#issuecomment-458557103 for more info).
+
+                        Actual core usage: It should be mentioned that the actual number of cores used is a little convoluted.
+                        Assuming that Python 3 is used and pigz is installed, --cores 2 would use 2 cores to read the input
+                        (probably not at a high usage though), 2 cores to write to the output (at moderately high usage), and 
+                        2 cores for Cutadapt itself + 2 additional cores for Cutadapt (not sure what they are used for) + 1 core
+                        for Trim Galore itself. So this can be up to 9 cores, even though most of them won't be used at 100% for
+                        most of the time. Paired-end processing uses twice as many cores for the validation (= writing out) step.
+                        --cores 4 would then be: 4 (read) + 4 (write) + 4 (Cutadapt) + 2 (extra Cutadapt) + 1 (Trim Galore) = 15.
+
+                        It seems that --cores 4 could be a sweet spot, anything above has diminishing returns.
+
+    ```
+    I am confused about this question, due to the cores math they do for Python3 in the above section of the `trimgalore --help` command.  I specified 8 cores using the `--cores` option. The following line was adjusted:
+
+    ```bash 
+        # Run TrimGalore
+        apptainer exec "$TRIMGALORE_CONTAINER" \
+            trim_galore \
+            --cores 8 \
+            --paired \
+            --fastqc \
+            --output_dir "$outdir" \
+            "$R1" \
+            "$R2"
+    ```
 
 1. To test the script and batch job submission, submit the script as a batch job only for sample `ERR10802863`.
 
+    I used the following command:
+     
+   ```bash
+   sbatch scripts/trimgalore.sh data/fastq/ERR10802863_R1.fastq.gz data/fastq/ERR10802863_R2.fastq.gz results/
+   ```
+     
+   The output was:
+     
+   ```bash
+    Submitted batch job 37831741
+    ```
+
 1. Monitor the job, and when it’s done, check that everything went well (if it didn’t, redo until you get it right). In your `README.md`, explain your monitoring and checking process. Then, remove all outputs (Slurm log files and TrimGalore output files) produced by this test-run.
+
+    I used the following command:
+
+    ```bash 
+    squeue -u scott2291
+    ```
+     
+   The output was:
+     
+   ```bash
+     JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+          37831562       cpu ondemand scott229  R    1:14:58      1 p0223
+          37831741   cpu-exp trimgalo scott229  R       0:11      1 p0507
+    ```
+  
+    I think that my first run ran as expected. I did not recieve any email error, my file was properly renamed, the output of the script went to the proper directory, and the FastQC HTML file contained the expected output
+
+    I will now remove all of the outputs from this run with the following commands:
+
+    ```bash
+    ls
+    rm slurm-trimgalore-37831741.out
+    rm results/ERR10802863_R*
+    ls
+    ls results/
+    ```
+
+    The output was:
+
+    ```bash
+    data  README.md  results  scripts  slurm-trimgalore-37831741.out
+
+    data  README.md  results  scripts
+    ```
 
 1. Illumina sequencing uses colors to distinguish between nucleotides as they are being added during the sequencing-by-synthesis process. However, newer Illumina machines (Nextseq and Novaseq) use a different color chemistry than older ones, and this newer chemistry suffers from an artefact that can erroneously produce strings of `G`s (“poly-G”) with high quality scores. Those `G`s should really be `N`s instead, and occur especially at the end of reverse (R2) reads.
 
-In the FastQC outputs for the R2 file that you just produced with TrimGalore (recall that it runs FastQC after trimmming!), do you see any evidence for this problem? Explain.
+    In the FastQC outputs for the R2 file that you just produced with TrimGalore (recall that it runs FastQC after trimmming!), do you see any evidence for this problem? Explain.
+
+    > When exploring the `ERR10802863_R2_val_2_fastqc.html` file, There is a warning in the Overrepresented sequences tab that flagged a repeated sequence of `G`s. This indicates to me that we are using the newer Illumina color chemistry, and that we should find a way to filter out the repeated `G` sequence.
 
 1. We’ll assume that the data was indeed produced with the newer Illumina color chemistry. In the TrimGalore help info, find the relevant TrimGalore option to deal with the poly-G probelm, and again add the relevant line(s) from the help info to your `README.md`. Then, use the TrimGalore option you found, but don’t change the quality score threshold from the default.
 
-1. Rerun TrimGalore with the added color-chemistry option. Check all outputs and confirm that usage of this option made a difference. Then, remove all outputs produced by this test-run again.
+    The following lines are produced by the `trimgalore --help` command and are related to the repeated `G`s sequence issue:
 
+    ```bash
+    --2colour/--nextseq INT This enables the option '--nextseq-trim=3'CUTOFF within Cutadapt, which will set a quality
+                        cutoff (that is normally given with -q instead), but qualities of G bases are ignored.
+                        This trimming is in common for the NextSeq- and NovaSeq-platforms, where basecalls without
+                        any signal are called as high-quality G bases. This is mutually exlusive with '-q INT'.
+
+    ```
+
+    I adjusted the following code in `trimgalore.sh` to trim repeated `G`s from the sequence data.
+
+    ```bash
+    # Run TrimGalore
+    apptainer exec "$TRIMGALORE_CONTAINER" \
+        trim_galore \
+        --cores 8 \
+        --2colour \
+        --paired \
+        --fastqc \
+        --output_dir "$outdir" \
+        "$R1" \
+        "$R2"
+    ```
+
+1. Rerun TrimGalore with the added color-chemistry option. Check all outputs and confirm that usage of this option made a difference. Then, remove all outputs produced by this test-run again.
+  
+   I used the following command:
+   ```bash
+    sbatch scripts/trimgalore.sh data/fastq/ERR10802863_R1.fastq.gz data/fastq/ERR10802863_R2.fastq.gz results
+    ```
+
+    The output was:
+
+    ```bash
+    Submitted batch job 37831843
+    ```
+
+    When checking the `ERR10802863_R2_val_2_fastqc.html` file again, there is no warning under the Overrepresented sequences tab, which indicates that the repeated `G`s have been removed. 
+
+    The command needed a specified number, and I used the 3 that I noticed from the `trimgalore --help` command.  I am not sure if this is too short of a specification, and I would be curious as to what you would reccommend to set this to.
+
+    
 ### Bonus: Modify the script to rename the output FASTQ files
 
 f you choose not to do this Bonus part, you can simply move on to Part C.
