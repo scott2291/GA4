@@ -203,10 +203,10 @@ set -euo pipefail
 
     The command needed a specified number, and I used the 3 that I noticed from the `trimgalore --help` command.  I am not sure if this is too short of a specification, and I would be curious as to what you would reccommend to set this to.
 
-    
+
 ### Bonus: Modify the script to rename the output FASTQ files
 
-f you choose not to do this Bonus part, you can simply move on to Part C.
+if you choose not to do this Bonus part, you can simply move on to Part C.
 
 The TrimGalore output FASTQ files are oddly named, ending in `_R1_val_1.fq.gz` and `_R2_val_2.fq.gz` – check the output files from your initial run to see this. This is not necessarily a problem, but could trip you up in a next step with these files.
 
@@ -218,7 +218,271 @@ After your test-run, it is time to run TrimGalore on all samples by submitting b
 
 1. Write a `for` loop in your `README.md` to submit a TrimGalore batch job for each pair of FASTQ files that you have in your `data` dir.
 
+    I first rewrote the `trimgalore.sh` to reassign the `R2` to a search and replace from the `R1` input. I did this to ensure that each pair is ran together. I changed `R2=$2` to `R2="${R1/_R1/_R2}"`. Then I ran the following loop to confirm I am looping over all the `R1` files in the `data` dir:
+
+    ```bash
+
+    for fastq_file in data/fastq/*_R1.fastq.gz; do
+        echo "# Running an analysis on $fastq_file"
+    done
+
+    ```
+
+    The output was 
+
+    ```bash
+    # Running an analysis on data/fastq/ERR10802863_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802864_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802865_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802866_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802867_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802868_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802869_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802870_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802871_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802874_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802875_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802876_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802877_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802878_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802879_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802880_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802881_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802882_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802883_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802884_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802885_R1.fastq.gz
+    # Running an analysis on data/fastq/ERR10802886_R1.fastq.gz
+    ```
+
+    Now I will run this loop to run a batch job of each file pair:
+
+    ```bash
+    for fastq_file in data/fastq/*_R1.fastq.gz; do
+        #echo "# Running an analysis on $fastq_file"
+        sbatch scripts/trimgalore.sh $fastq_file results
+    done
+    ```
+
+    The output of this loop was:
+
+    ```bash
+    Submitted batch job 37831966
+    Submitted batch job 37831967
+    Submitted batch job 37831968
+    Submitted batch job 37831969
+    Submitted batch job 37831970
+    Submitted batch job 37831971
+    Submitted batch job 37831972
+    Submitted batch job 37831973
+    Submitted batch job 37831974
+    Submitted batch job 37831975
+    Submitted batch job 37831976
+    Submitted batch job 37831977
+    Submitted batch job 37831978
+    Submitted batch job 37831979
+    Submitted batch job 37831980
+    Submitted batch job 37831981
+    Submitted batch job 37831982
+    Submitted batch job 37831983
+    Submitted batch job 37831984
+    Submitted batch job 37831985
+    Submitted batch job 37831986
+    Submitted batch job 37831987
+    ```
+
 1. Monitor the batch jobs and when they are done, check that everything went well (if it didn’t, redo until you get it right). In your `README.md`, explain your monitoring and checking process. In this case, it is appropriate to keep the Slurm log files: move them into a dir `logs` within the TrimGalore output dir.
+
+    To monitor my batch job, I first checked if all of my jobs were in the queue by using the following command:
+
+    ```bash
+    squeue -u scott2291
+    ```
+
+    The output was:
+
+    ```bash
+    JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+          37831966       cpu trimgalo scott229  R       0:11      1 p0032
+          37831967       cpu trimgalo scott229  R       0:11      1 p0056
+          37831968       cpu trimgalo scott229  R       0:11      1 p0063
+          37831969       cpu trimgalo scott229  R       0:11      1 p0083
+          37831970       cpu trimgalo scott229  R       0:11      1 p0124
+          37831971       cpu trimgalo scott229  R       0:11      1 p0187
+          37831972       cpu trimgalo scott229  R       0:11      1 p0193
+          37831973       cpu trimgalo scott229  R       0:11      1 p0002
+          37831974       cpu trimgalo scott229  R       0:11      1 p0002
+          37831975       cpu trimgalo scott229  R       0:11      1 p0019
+          37831976       cpu trimgalo scott229  R       0:11      1 p0020
+          37831977       cpu trimgalo scott229  R       0:11      1 p0027
+          37831978       cpu trimgalo scott229  R       0:11      1 p0027
+          37831979       cpu trimgalo scott229  R       0:11      1 p0030
+          37831980       cpu trimgalo scott229  R       0:11      1 p0030
+          37831981       cpu trimgalo scott229  R       0:11      1 p0042
+          37831982       cpu trimgalo scott229  R       0:11      1 p0042
+          37831983       cpu trimgalo scott229  R       0:11      1 p0068
+          37831984       cpu trimgalo scott229  R       0:11      1 p0069
+          37831985       cpu trimgalo scott229  R       0:11      1 p0008
+          37831986       cpu trimgalo scott229  R       0:11      1 p0008
+          37831987       cpu trimgalo scott229  R       0:11      1 p0008
+          37831856   cpu-exp ondemand scott229  R      30:25      1 p0831
+    ```
+
+    This output confirmed that all of my jobs were running simutaneously. I then used the `ls` command to confirm that separate `slurm` files were created for each job. The following code block contains the output of the `ls` command:
+
+    ```bash
+    data                           slurm-trimgalore-37831969.out  slurm-trimgalore-37831976.out  slurm-trimgalore-37831983.out
+    README.md                      slurm-trimgalore-37831970.out  slurm-trimgalore-37831977.out  slurm-trimgalore-37831984.out
+    results                        slurm-trimgalore-37831971.out  slurm-trimgalore-37831978.out  slurm-trimgalore-37831985.out
+    scripts                        slurm-trimgalore-37831972.out  slurm-trimgalore-37831979.out  slurm-trimgalore-37831986.out
+    slurm-trimgalore-37831966.out  slurm-trimgalore-37831973.out  slurm-trimgalore-37831980.out  slurm-trimgalore-37831987.out
+    slurm-trimgalore-37831967.out  slurm-trimgalore-37831974.out  slurm-trimgalore-37831981.out
+    slurm-trimgalore-37831968.out  slurm-trimgalore-37831975.out  slurm-trimgalore-37831982.out
+
+    ```
+
+    Finally, I checked that every R1 and R2 fastq file produced the proper files in the `results` directory using the following command:
+
+    ```bash
+    ls results/
+    ```
+
+    The output was:
+
+    ```bash
+    ERR10802863_R1.fastq.gz_trimming_report.txt  ERR10802870_R1_val_1.fq.gz                   ERR10802879_R2_val_2_fastqc.zip
+    ERR10802863_R1_val_1_fastqc.html             ERR10802870_R2.fastq.gz_trimming_report.txt  ERR10802879_R2_val_2.fq.gz
+    ERR10802863_R1_val_1_fastqc.zip              ERR10802870_R2_val_2_fastqc.html             ERR10802880_R1.fastq.gz_trimming_report.txt
+    ERR10802863_R1_val_1.fq.gz                   ERR10802870_R2_val_2_fastqc.zip              ERR10802880_R1_val_1_fastqc.html
+    ERR10802863_R2.fastq.gz_trimming_report.txt  ERR10802870_R2_val_2.fq.gz                   ERR10802880_R1_val_1_fastqc.zip
+    ERR10802863_R2_val_2_fastqc.html             ERR10802871_R1.fastq.gz_trimming_report.txt  ERR10802880_R1_val_1.fq.gz
+    ERR10802863_R2_val_2_fastqc.zip              ERR10802871_R1_val_1_fastqc.html             ERR10802880_R2.fastq.gz_trimming_report.txt
+    ERR10802863_R2_val_2.fq.gz                   ERR10802871_R1_val_1_fastqc.zip              ERR10802880_R2_val_2_fastqc.html
+    ERR10802864_R1.fastq.gz_trimming_report.txt  ERR10802871_R1_val_1.fq.gz                   ERR10802880_R2_val_2_fastqc.zip
+    ERR10802864_R1_val_1_fastqc.html             ERR10802871_R2.fastq.gz_trimming_report.txt  ERR10802880_R2_val_2.fq.gz
+    ERR10802864_R1_val_1_fastqc.zip              ERR10802871_R2_val_2_fastqc.html             ERR10802881_R1.fastq.gz_trimming_report.txt
+    ERR10802864_R1_val_1.fq.gz                   ERR10802871_R2_val_2_fastqc.zip              ERR10802881_R1_val_1_fastqc.html
+    ERR10802864_R2.fastq.gz_trimming_report.txt  ERR10802871_R2_val_2.fq.gz                   ERR10802881_R1_val_1_fastqc.zip
+    ERR10802864_R2_val_2_fastqc.html             ERR10802874_R1.fastq.gz_trimming_report.txt  ERR10802881_R1_val_1.fq.gz
+    ERR10802864_R2_val_2_fastqc.zip              ERR10802874_R1_val_1_fastqc.html             ERR10802881_R2.fastq.gz_trimming_report.txt
+    ERR10802864_R2_val_2.fq.gz                   ERR10802874_R1_val_1_fastqc.zip              ERR10802881_R2_val_2_fastqc.html
+    ERR10802865_R1.fastq.gz_trimming_report.txt  ERR10802874_R1_val_1.fq.gz                   ERR10802881_R2_val_2_fastqc.zip
+    ERR10802865_R1_val_1_fastqc.html             ERR10802874_R2.fastq.gz_trimming_report.txt  ERR10802881_R2_val_2.fq.gz
+    ERR10802865_R1_val_1_fastqc.zip              ERR10802874_R2_val_2_fastqc.html             ERR10802882_R1.fastq.gz_trimming_report.txt
+    ERR10802865_R1_val_1.fq.gz                   ERR10802874_R2_val_2_fastqc.zip              ERR10802882_R1_val_1_fastqc.html
+    ERR10802865_R2.fastq.gz_trimming_report.txt  ERR10802874_R2_val_2.fq.gz                   ERR10802882_R1_val_1_fastqc.zip
+    ERR10802865_R2_val_2_fastqc.html             ERR10802875_R1.fastq.gz_trimming_report.txt  ERR10802882_R1_val_1.fq.gz
+    ERR10802865_R2_val_2_fastqc.zip              ERR10802875_R1_val_1_fastqc.html             ERR10802882_R2.fastq.gz_trimming_report.txt
+    ERR10802865_R2_val_2.fq.gz                   ERR10802875_R1_val_1_fastqc.zip              ERR10802882_R2_val_2_fastqc.html
+    ERR10802866_R1.fastq.gz_trimming_report.txt  ERR10802875_R1_val_1.fq.gz                   ERR10802882_R2_val_2_fastqc.zip
+    ERR10802866_R1_val_1_fastqc.html             ERR10802875_R2.fastq.gz_trimming_report.txt  ERR10802882_R2_val_2.fq.gz
+    ERR10802866_R1_val_1_fastqc.zip              ERR10802875_R2_val_2_fastqc.html             ERR10802883_R1.fastq.gz_trimming_report.txt
+    ERR10802866_R1_val_1.fq.gz                   ERR10802875_R2_val_2_fastqc.zip              ERR10802883_R1_val_1_fastqc.html
+    ERR10802866_R2.fastq.gz_trimming_report.txt  ERR10802875_R2_val_2.fq.gz                   ERR10802883_R1_val_1_fastqc.zip
+    ERR10802866_R2_val_2_fastqc.html             ERR10802876_R1.fastq.gz_trimming_report.txt  ERR10802883_R1_val_1.fq.gz
+    ERR10802866_R2_val_2_fastqc.zip              ERR10802876_R1_val_1_fastqc.html             ERR10802883_R2.fastq.gz_trimming_report.txt
+    ERR10802866_R2_val_2.fq.gz                   ERR10802876_R1_val_1_fastqc.zip              ERR10802883_R2_val_2_fastqc.html
+    ERR10802867_R1.fastq.gz_trimming_report.txt  ERR10802876_R1_val_1.fq.gz                   ERR10802883_R2_val_2_fastqc.zip
+    ERR10802867_R1_val_1_fastqc.html             ERR10802876_R2.fastq.gz_trimming_report.txt  ERR10802883_R2_val_2.fq.gz
+    ERR10802867_R1_val_1_fastqc.zip              ERR10802876_R2_val_2_fastqc.html             ERR10802884_R1.fastq.gz_trimming_report.txt
+    ERR10802867_R1_val_1.fq.gz                   ERR10802876_R2_val_2_fastqc.zip              ERR10802884_R1_val_1_fastqc.html
+    ERR10802867_R2.fastq.gz_trimming_report.txt  ERR10802876_R2_val_2.fq.gz                   ERR10802884_R1_val_1_fastqc.zip
+    ERR10802867_R2_val_2_fastqc.html             ERR10802877_R1.fastq.gz_trimming_report.txt  ERR10802884_R1_val_1.fq.gz
+    ERR10802867_R2_val_2_fastqc.zip              ERR10802877_R1_val_1_fastqc.html             ERR10802884_R2.fastq.gz_trimming_report.txt
+    ERR10802867_R2_val_2.fq.gz                   ERR10802877_R1_val_1_fastqc.zip              ERR10802884_R2_val_2_fastqc.html
+    ERR10802868_R1.fastq.gz_trimming_report.txt  ERR10802877_R1_val_1.fq.gz                   ERR10802884_R2_val_2_fastqc.zip
+    ERR10802868_R1_val_1_fastqc.html             ERR10802877_R2.fastq.gz_trimming_report.txt  ERR10802884_R2_val_2.fq.gz
+    ERR10802868_R1_val_1_fastqc.zip              ERR10802877_R2_val_2_fastqc.html             ERR10802885_R1.fastq.gz_trimming_report.txt
+    ERR10802868_R1_val_1.fq.gz                   ERR10802877_R2_val_2_fastqc.zip              ERR10802885_R1_val_1_fastqc.html
+    ERR10802868_R2.fastq.gz_trimming_report.txt  ERR10802877_R2_val_2.fq.gz                   ERR10802885_R1_val_1_fastqc.zip
+    ERR10802868_R2_val_2_fastqc.html             ERR10802878_R1.fastq.gz_trimming_report.txt  ERR10802885_R1_val_1.fq.gz
+    ERR10802868_R2_val_2_fastqc.zip              ERR10802878_R1_val_1_fastqc.html             ERR10802885_R2.fastq.gz_trimming_report.txt
+    ERR10802868_R2_val_2.fq.gz                   ERR10802878_R1_val_1_fastqc.zip              ERR10802885_R2_val_2_fastqc.html
+    ERR10802869_R1.fastq.gz_trimming_report.txt  ERR10802878_R1_val_1.fq.gz                   ERR10802885_R2_val_2_fastqc.zip
+    ERR10802869_R1_val_1_fastqc.html             ERR10802878_R2.fastq.gz_trimming_report.txt  ERR10802885_R2_val_2.fq.gz
+    ERR10802869_R1_val_1_fastqc.zip              ERR10802878_R2_val_2_fastqc.html             ERR10802886_R1.fastq.gz_trimming_report.txt
+    ERR10802869_R1_val_1.fq.gz                   ERR10802878_R2_val_2_fastqc.zip              ERR10802886_R1_val_1_fastqc.html
+    ERR10802869_R2.fastq.gz_trimming_report.txt  ERR10802878_R2_val_2.fq.gz                   ERR10802886_R1_val_1_fastqc.zip
+    ERR10802869_R2_val_2_fastqc.html             ERR10802879_R1.fastq.gz_trimming_report.txt  ERR10802886_R1_val_1.fq.gz
+    ERR10802869_R2_val_2_fastqc.zip              ERR10802879_R1_val_1_fastqc.html             ERR10802886_R2.fastq.gz_trimming_report.txt
+    ERR10802869_R2_val_2.fq.gz                   ERR10802879_R1_val_1_fastqc.zip              ERR10802886_R2_val_2_fastqc.html
+    ERR10802870_R1.fastq.gz_trimming_report.txt  ERR10802879_R1_val_1.fq.gz                   ERR10802886_R2_val_2_fastqc.zip
+    ERR10802870_R1_val_1_fastqc.html             ERR10802879_R2.fastq.gz_trimming_report.txt  ERR10802886_R2_val_2.fq.gz
+    ERR10802870_R1_val_1_fastqc.zip              ERR10802879_R2_val_2_fastqc.html
+    ```
+
+    Now that the jobs have been completed and the proper `slurm` files have been created, I will move all the `slurm` files to a new directory named `logs`. To acheive this goal, I used the following commands:
+
+    ```bash
+    ls
+
+    mkdir logs
+    mv slurm-trimgalore-378319* logs
+    ls
+
+    ls logs
+
+    ```
+
+    The output was:
+
+    ```bash
+    data                           slurm-trimgalore-37831969.out  slurm-trimgalore-37831976.out  slurm-trimgalore-37831983.out
+    README.md                      slurm-trimgalore-37831970.out  slurm-trimgalore-37831977.out  slurm-trimgalore-37831984.out
+    results                        slurm-trimgalore-37831971.out  slurm-trimgalore-37831978.out  slurm-trimgalore-37831985.out
+    scripts                        slurm-trimgalore-37831972.out  slurm-trimgalore-37831979.out  slurm-trimgalore-37831986.out
+    slurm-trimgalore-37831966.out  slurm-trimgalore-37831973.out  slurm-trimgalore-37831980.out  slurm-trimgalore-37831987.out
+    slurm-trimgalore-37831967.out  slurm-trimgalore-37831974.out  slurm-trimgalore-37831981.out
+    slurm-trimgalore-37831968.out  slurm-trimgalore-37831975.out  slurm-trimgalore-37831982.out
+
+    data  logs  README.md  results  scripts
+
+    slurm-trimgalore-37831966.out  slurm-trimgalore-37831972.out  slurm-trimgalore-37831978.out  slurm-trimgalore-37831984.out
+    slurm-trimgalore-37831967.out  slurm-trimgalore-37831973.out  slurm-trimgalore-37831979.out  slurm-trimgalore-37831985.out
+    slurm-trimgalore-37831968.out  slurm-trimgalore-37831974.out  slurm-trimgalore-37831980.out  slurm-trimgalore-37831986.out
+    slurm-trimgalore-37831969.out  slurm-trimgalore-37831975.out  slurm-trimgalore-37831981.out  slurm-trimgalore-37831987.out
+    slurm-trimgalore-37831970.out  slurm-trimgalore-37831976.out  slurm-trimgalore-37831982.out
+    slurm-trimgalore-37831971.out  slurm-trimgalore-37831977.out  slurm-trimgalore-37831983.out
+    ```
+
+    I will also add the `logs` and `results` directories to my `.gitignore`, so they will not be tracked. To accomplish this task, I used the following commands:
+
+    ```bash
+    git status
+    
+    echo "results/" >> .gitignore
+    echo "logs/" >> .gitignore
+
+    git status
+    ```
+
+    The output was:
+
+    ```bash
+    On branch main
+    Changes not staged for commit:
+    (use "git add <file>..." to update what will be committed)
+    (use "git restore <file>..." to discard changes in working directory)
+            modified:   README.md
+            modified:   scripts/trimgalore.sh
+
+    Untracked files:
+    (use "git add <file>..." to include in what will be committed)
+            logs/
+            results/
+
+    no changes added to commit (use "git add" and/or "git commit -a")
+
+    On branch main
+    Changes not staged for commit:
+    (use "git add <file>..." to update what will be committed)
+    (use "git restore <file>..." to discard changes in working directory)
+            modified:   .gitignore
+            modified:   README.md
+            modified:   scripts/trimgalore.sh
+
+    no changes added to commit (use "git add" and/or "git commit -a")
+    ```
 
 ## Part D: Publish your repo on Github
 

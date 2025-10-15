@@ -11,8 +11,8 @@ TRIMGALORE_CONTAINER=oras://community.wave.seqera.io/library/trim-galore:0.6.10-
 
 # Copy the placeholder variables
 R1="$1"
-R2="$2"
-outdir="$3"
+R2="${R1/_R1/_R2}"
+outdir="$2"
 
 # Report
 echo "# Starting script trimgalore.sh"
@@ -37,6 +37,7 @@ apptainer exec "$TRIMGALORE_CONTAINER" \
     "$R2"
 
 # Report
+
 echo
 echo "# TrimGalore version:"
 apptainer exec "$TRIMGALORE_CONTAINER" \
